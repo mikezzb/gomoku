@@ -1,5 +1,5 @@
 import React, { Component } from 'react';
-import './App.scss';
+import './App.css';
 import Board from './components/Board'
 import Button from '@material-ui/core/Button';
 import Dialog from '@material-ui/core/Dialog';

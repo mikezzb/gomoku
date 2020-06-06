@@ -1,9 +1,15 @@
 import React, { Component } from 'react';
 import {isMobile} from "react-device-detect";
 import io from 'socket.io-client';
+import Button from '@material-ui/core/Button';
+import Dialog from '@material-ui/core/Dialog';
+import DialogActions from '@material-ui/core/DialogActions';
+import DialogContent from '@material-ui/core/DialogContent';
+import DialogContentText from '@material-ui/core/DialogContentText';
+import DialogTitle from '@material-ui/core/DialogTitle';
 
 let cellWidth=isMobile?28:40
-const socket = io();//socket io is listening on 8000 port, care this may cause heroku bug
+const socket = io('localhost:5000');
 //var socket = io();
 //const socket = io('localhost:5000');
 
@@ -24,9 +30,9 @@ export default class Board extends Component{
             roomno:null,//connected room number
             fixedColor:false,
             userJoined:false,
+            started:false,
             connected:false //connected if online pvp, else play with computer or local pvp
         }
-        this.sendSocketIO = this.sendSocketIO.bind(this);
     }
 
     componentDidMount(){
@@ -62,6 +68,7 @@ export default class Board extends Component{
             socket.on('setPlayingColor',(data)=>{//received opponent color setting
                 this.setState({
                     isBlack:!data.isBlack,
+                    started:true,
                     waiting:data.isBlack// black first, !data.isBlack is self color, so data.isBlack is true mean waiting is true
                 })
             })
@@ -81,11 +88,6 @@ export default class Board extends Component{
         }else{
             alert('Please Wait Your Opponent! Or please choose a color to start')
         }
-    }
-    
-    sendSocketIO(x,y,isBlack) {
-        console.log('Emitting a move')
-        socket.emit("move", {x:x,y:y,isBlack:isBlack,roomno:this.state.roomno});
     }
 
     initialise=()=>{
@@ -118,7 +120,7 @@ export default class Board extends Component{
         if(board[y][x]===null){// if the position is empty then place the piece
             //draw piece
             if(this.state.connected && opponentColor===null){
-                this.sendSocketIO(x,y,this.state.isBlack)//sent the move to socketio
+                socket.emit("move", {x:x,y:y,isBlack:isBlack,roomno:this.state.roomno});
             }
             const ctx = this.canvas.getContext('2d');
             ctx.beginPath()
@@ -154,13 +156,8 @@ export default class Board extends Component{
         }
     }
 
-    gameOver=(x,y,isBlack)=>{// only need to check surrounding pieces of the latest move
-        //console.table(this.state.board)
-        //check Verticle
+    gameOver=(x,y,isBlack)=>{
         const startingIndexVerticle=(y-4)>=0?(y-4):0
-        //const endingIndexVerticle=(y+4)<=15?(y+4):15 // if endingIndex>15, then j cant be larger than 15
-        //console.log('y x: '+y+' '+x)
-        //console.log('Verticle Index: '+startingIndexVerticle)
         for(let i=startingIndexVerticle;i<=y;i++){
             let counter=0
             for(let j=0;j<5;j++){
@@ -177,7 +174,6 @@ export default class Board extends Component{
         }
         //check Horizontal
         const startingIndexHorizontal=(x-4)>=0?(x-4):0
-        //console.log('Horizontal Index: '+startingIndexHorizontal)
         for(let i=startingIndexHorizontal;i<=x;i++){
             let counter=0
             for(let j=0;j<5;j++){
@@ -188,7 +184,6 @@ export default class Board extends Component{
                 else
                     break;
             }
-            //console.warn('counterH: '+counter)
             if(counter===5)
                 return true;
         }
@@ -207,7 +202,6 @@ export default class Board extends Component{
             for(let j=0;j<5;j++){
                 if(y-i-j>this.state.boardSize||y-i-j<0||x+i+j>this.state.boardSize||x+i+j<0)
                     continue
-                //console.log('Backslash coordinate: '+(y-i-j)+' '+(x+i+j))
                 if(this.state.board[y-i-j][x+i+j]===isBlack)
                     counterBackSlash++
                 else
@@ -234,7 +228,8 @@ export default class Board extends Component{
             socket.emit('setPlayingColor',{roomno:this.state.roomno,isBlack:isBlack})
         this.setState({
             isBlack:isBlack,
-            waiting:!isBlack
+            waiting:!isBlack,
+            started:true
         })
     }
 
@@ -252,10 +247,7 @@ export default class Board extends Component{
                         :null
                     }
                     <div>{'Playing: '+player+' | Status: '+status}</div>
-                    <div onClick={this.initialise} style={{cursor:'pointer',display:'inline'}}>(Reset) </div>
-                    <div style={{display:'inline'}}>Choose Color: </div>
-                    <div onClick={()=>this.setColor(true)} style={{cursor:'pointer',display:'inline'}}> BLACK |</div>
-                    <div onClick={()=>this.setColor(false)} style={{cursor:'pointer',display:'inline'}}> WHITE </div>
+                    {this.state.winner!==null && this.state.started?<div onClick={this.initialise} style={{cursor:'pointer',display:'inline'}}>Reset</div>:null}
                 </div>
 
                 <canvas className="gameboard"
@@ -264,6 +256,29 @@ export default class Board extends Component{
                     height={cellWidth*(this.state.boardSize+1)}
                     onClick={this.canvasOnclick}
                 />
+                
+                <Dialog
+                open={this.state.userJoined&&!this.state.started}
+                aria-labelledby="alert-dialog-title"
+                aria-describedby="alert-dialog-description">
+                <DialogTitle id="alert-dialog-title">{this.state.opponentName+" is Challenging You!!!!"}</DialogTitle>
+                <DialogContent>
+                  <DialogContentText id="alert-dialog-description">
+                      {'Please Choose Black or White stone to start (Black first), first come first served >.<'}
+                  </DialogContentText>
+                </DialogContent>
+                <DialogActions>
+                  <Button onClick={()=>this.setColor(false)}  color="primary">
+                    White
+                  </Button>
+                  <Button onClick={()=>this.setColor(true)} color="primary" autoFocus>
+                    Black
+                  </Button>
+                </DialogActions>
+              </Dialog>
+                
+
+
           </div>
         );
       }
