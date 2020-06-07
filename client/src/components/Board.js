@@ -9,7 +9,7 @@ import DialogContentText from '@material-ui/core/DialogContentText';
 import DialogTitle from '@material-ui/core/DialogTitle';
 
 let cellWidth=isMobile?28:40
-var socket = io('localhost:5000');
+var socket = io();
 /*
 var socket = io();
 var socket = io('localhost:5000');
