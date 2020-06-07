@@ -15,7 +15,6 @@ io.on('connection', function(socket){
   //console.log('a user connected');
   userCounter++
 
-
   socket.on('disconnect', function(){
     //console.log('User Disconnected');
     socket.leave("room-"+roomno);

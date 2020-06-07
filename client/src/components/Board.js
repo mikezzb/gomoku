@@ -294,7 +294,7 @@ export default class Board extends Component{
                         </DialogActions>
                     </Dialog>
               </div>
-              {isMobile?null:
+              {isMobile||!this.state.connected?null:
               <div className="chatboxWrapper">
                   <div className="chatboxLabel">
                       <span className='dot' style={this.state.userJoined?{backgroundColor:'green'}:null}/>

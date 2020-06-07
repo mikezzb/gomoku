@@ -13,8 +13,8 @@
   background-color: #f7f7f7;
 }
 
-.label{
-  margin: calc((100vh - 650px)/8) auto;
+.label >div{
+  margin-bottom: 8px;
 }
 
 .gameboard{
@@ -72,7 +72,7 @@ fieldset{
   align-self: flex-end;
   margin: 10px 10px 10px 0;
   float: right;
-  max-width: 60%;
+  max-width: 80%;
   background: #00bfb6;
   padding: 10px;
   text-align: center;
