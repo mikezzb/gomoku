@@ -9,7 +9,7 @@ import DialogContentText from '@material-ui/core/DialogContentText';
 import DialogTitle from '@material-ui/core/DialogTitle';
 
 let cellWidth=isMobile?28:40
-var socket = io();
+var socket = io('localhost:5000');
 /*
 var socket = io();
 var socket = io('localhost:5000');
@@ -300,7 +300,7 @@ export default class Board extends Component{
                       <span className='dot' style={this.state.userJoined?{backgroundColor:'green'}:null}/>
                       {'Room: '+this.state.roomno}
                   </div>
-                  <div className="messageContainer" style={{height:cellWidth*(this.state.boardSize+1)-20}}>
+                  <div className="messageContainer" style={{height:cellWidth*(this.state.boardSize+1)-60}}>
                       {this.state.messageArray.map((message)=>(
                             <div className={message.isOpponent?'box s2':'box s1'} 
                                 style={message.isOpponent?{background:'rgb(248, 161, 176)',alignSelf:'flex-start',marginLeft:10}:null}>

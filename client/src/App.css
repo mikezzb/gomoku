@@ -8,7 +8,6 @@
   align-items: center;
   display: flex;
   height: 100vh;
-  overflow-y: hidden;
   flex-direction: row;
   background-color: #f7f7f7;
 }
@@ -23,7 +22,6 @@
 }
 
 .chatboxWrapper{
-  margin-top: calc((100vh - 650px)/8);
   height:fit-content;
   background-color: #fff;
   margin-left: 10vw;
