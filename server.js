@@ -11,15 +11,16 @@ var userCounter=0;
 var roomno = 1;
 
 io.on('connection', function(socket){
-
-  //console.log('a user connected');
   userCounter++
-
+  
   socket.on('disconnect', function(){
-    //console.log('User Disconnected');
-    socket.leave("room-"+roomno);
     userCounter--
   });
+
+  socket.on('quitRoom',(roomno)=>{
+    socket.leave("room-"+roomno);
+    socket.to("room-"+roomno).emit('quitRoom',null)
+  })
 
   socket.on('joinRoom', function(specifiedRoomNo){
     var room = io.nsps['/'].adapter.rooms["room-"+roomno];
@@ -36,7 +37,6 @@ io.on('connection', function(socket){
   });
 
   socket.on('emitUsername',(data)=>{// to be integrated in setplayingcolor
-    //console.log('Emitted username: '+data.username+' in room '+data.roomno)
     socket.to("room-"+data.roomno).emit('emitUsername',data.username);// tell opponent your name
   })
 
@@ -62,21 +62,6 @@ app.use(sslRedirect());
 app.use(cors());
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'client/build')));
-
-/*
-mongoose.set('useFindAndModify', false);
-let uri = "mongodb+srv://zbzhou:q3886839@cluster0-raxkz.mongodb.net/test?retryWrites=true&w=majority";
-mongoose.connect(uri, { useNewUrlParser: true, useCreateIndex: true, useUnifiedTopology: true });
-const connection = mongoose.connection;
-connection.once('open', (socket) => {
-  console.log("MongoDB database connection established successfully");
-});
-*/
-
-const usersRouter = require('./routes/users');
-
-app.use('/users', usersRouter);
-
 
 http.listen(port, () => {
     console.log(`Server is running on port: ${port}`);

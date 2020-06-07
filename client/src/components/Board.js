@@ -37,6 +37,8 @@ export default class Board extends Component{
             started:false,
             connected:false //connected if online pvp, else play with computer or local pvp
         }
+        this.messagesEnd=React.createRef();
+        this.scrollToBottom=this.scrollToBottom.bind(this)
     }
 
     componentDidMount(){
@@ -84,12 +86,38 @@ export default class Board extends Component{
                     waiting:data.isBlack// black first, !data.isBlack is self color, so data.isBlack is true mean waiting is true
                 })
             })
+            socket.on('quitRoom',()=>{
+                alert('Your opponent quited, you win! \n 不戰而屈人之兵，善之善者也！')
+                this.setState({
+                    userJoined:false,
+                    started:false,
+                    opponentName:''
+                })
+            })
             if(this.state.roomno===null)// if first time joining the room
                 socket.emit('joinRoom',null)
+
+            window.addEventListener('beforeunload', (event) => {
+                socket.emit('quitRoom',this.state.roomno)
+                return undefined
+            });
+
         }else{
             socket.disconnect()
         }
         this.initialise()
+    }
+
+    componentDidUpdate() {
+        if(this.state.connected && !isMobile){
+            setTimeout(()=>{
+                this.scrollToBottom();
+            },300)//ref wont initialised without timeout (#BUG) (set mount true in componentdidmount also wont work, maybe due to webpack hot update bug)
+        }
+    }
+
+    componentWillUnmount(){
+        window.removeEventListener('beforeunload', this.onUnmount, false);
     }
 
     canvasOnclick=(e)=>{
@@ -262,6 +290,10 @@ export default class Board extends Component{
         })
     }
 
+    scrollToBottom=()=>{
+        this.messagesEnd.current.scrollIntoView();
+    }
+
     render(){
         const player=this.state.isBlack?'Black':'White'
         const status=this.state.waiting?'Waiting...':'Your Move!'
@@ -301,12 +333,15 @@ export default class Board extends Component{
                       {'Room: '+this.state.roomno}
                   </div>
                   <div className="messageContainer" style={{height:cellWidth*(this.state.boardSize+1)-60}}>
-                      {this.state.messageArray.map((message)=>(
+                        {this.state.messageArray.map((message)=>(
                             <div className={message.isOpponent?'box s2':'box s1'} 
-                                style={message.isOpponent?{background:'rgb(248, 161, 176)',alignSelf:'flex-start',marginLeft:10}:null}>
+                                style={message.isOpponent?{background:'rgb(248, 161, 176)',alignSelf:'flex-start',marginLeft:8}:null}>
                                 {message.message}
                             </div>
                         ))}
+                        <div style={{ float:"left", clear: "both" }}//psedoelement for scrolling to bottom
+                            ref={this.messagesEnd}>
+                        </div>
                   </div>
                   <form onSubmit={this.sendMessage}>
                       <input className="chatInput"

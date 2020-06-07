@@ -55,24 +55,30 @@ fieldset{
   width: 80%;
   border: 1px solid #ccc;
   border-radius: 3px;
-  padding: 8px;
+  padding: 10px;
   outline: none;
 }
 
 .messageContainer{
+  -ms-overflow-style: none;
   display: flex;
   flex-direction: column;
   overflow-y: scroll;
 }
 
+.messageContainer::-webkit-scrollbar {
+  display: none;
+}
+
 .box {
+  border-radius: 5px;
   word-wrap: break-word;
   align-self: flex-end;
   margin: 10px 10px 10px 0;
   float: right;
   max-width: 80%;
   background: #00bfb6;
-  padding: 10px;
+  padding: 6px 10px;
   text-align: center;
   font-weight: 900;
   color: #fff;
@@ -85,12 +91,12 @@ fieldset{
   width: 0px;
   height: 0px;
   position: absolute;
-  border-left: 10px solid #00bfb6;
-  border-right: 10px solid transparent;
-  border-top: 10px solid #00bfb6;
-  border-bottom: 10px solid transparent;
-  right: -10px;
-  top: 6px;
+  border-left: 6px solid #00bfb6;
+  border-right: 6px solid transparent;
+  border-top: 6px solid #00bfb6;
+  border-bottom: 6px solid transparent;
+  right: -6px;
+  top: 3px;
 }
 
 .s2:before {
@@ -98,10 +104,10 @@ fieldset{
   width: 0px;
   height: 0px;
   position: absolute;
-  border-left: 10px solid transparent;
-  border-right: 10px solid rgb(248, 161, 176);
-  border-top: 10px solid rgb(248, 161, 176);
-  border-bottom: 10px solid transparent;
-  left: -10px;
-  top: 6px;
+  border-left: 6px solid transparent;
+  border-right: 6px solid rgb(248, 161, 176);
+  border-top: 6px solid rgb(248, 161, 176);
+  border-bottom: 6px solid transparent;
+  left: -6px;
+  top: 3px;
 }
