@@ -1,6 +1,5 @@
 const express = require('express');
 const cors = require('cors');
-const mongoose = require('mongoose');
 const path = require('path');
 var sslRedirect = require('heroku-ssl-redirect');
 var app = express();
