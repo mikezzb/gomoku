@@ -51,6 +51,11 @@ io.on('connection', function(socket){
     socket.to("room-"+data.roomno).emit('setPlayingColor',data);// emit move to the room
   })
 
+  socket.on('roomChat',(data)=>{
+    //console.log('User '+data.username+'Playing: '+data.isBlack);
+    socket.to("room-"+data.roomno).emit('roomChat',data.message);// emit move to the room
+  })
+
 });
 
 const port = process.env.PORT || 5000;
@@ -59,6 +64,7 @@ app.use(cors());
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'client/build')));
 
+/*
 mongoose.set('useFindAndModify', false);
 let uri = "mongodb+srv://zbzhou:q3886839@cluster0-raxkz.mongodb.net/test?retryWrites=true&w=majority";
 mongoose.connect(uri, { useNewUrlParser: true, useCreateIndex: true, useUnifiedTopology: true });
@@ -66,6 +72,7 @@ const connection = mongoose.connection;
 connection.once('open', (socket) => {
   console.log("MongoDB database connection established successfully");
 });
+*/
 
 const usersRouter = require('./routes/users');
 

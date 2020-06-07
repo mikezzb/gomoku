@@ -12,15 +12,16 @@ let cellWidth=isMobile?28:40
 var socket = io();
 /*
 var socket = io();
-const socket = io('localhost:5000');
+var socket = io('localhost:5000');
 */
-
-
 
 export default class Board extends Component{
     constructor(props){
         super(props)
         this.state={
+            message:'',
+            messageArray:[],
+            canvasHeight:0,
             roomPlayerNumber:0,
             username:'',
             opponentName:'',
@@ -50,7 +51,7 @@ export default class Board extends Component{
                 this.setState({opponentName:username})
             })
             socket.on('connectToRoom',(data)=>{
-                console.warn('connected to room no. '+data.roomno+'number of clients '+data.clientCount)
+                console.log('connected to room no. '+data.roomno+'number of clients '+data.clientCount+' Joined? '+this.state.userJoined)
                 if(data.clientCount===1){
                     console.log('Emitting username out!!!')
                     socket.emit('emitUsername',{
@@ -68,6 +69,14 @@ export default class Board extends Component{
                     })
                 }
             });
+            socket.on('roomChat',(message)=>{//sent chat message
+                let messageArray=this.state.messageArray
+                messageArray.push({
+                    message:message,
+                    isOpponent:true
+                })
+                this.setState({messageArray:messageArray})
+            })
             socket.on('setPlayingColor',(data)=>{//received opponent color setting
                 this.setState({
                     isBlack:!data.isBlack,
@@ -75,7 +84,7 @@ export default class Board extends Component{
                     waiting:data.isBlack// black first, !data.isBlack is self color, so data.isBlack is true mean waiting is true
                 })
             })
-            if(this.state.roomno===null)
+            if(this.state.roomno===null)// if first time joining the room
                 socket.emit('joinRoom',null)
         }else{
             socket.disconnect()
@@ -236,52 +245,80 @@ export default class Board extends Component{
         })
     }
 
+    sendMessage=(e)=>{
+        e.preventDefault()
+        socket.emit('roomChat',{
+            roomno:this.state.roomno,
+            message:this.state.message
+        })
+        let messageArray=this.state.messageArray
+        messageArray.push({
+            message:this.state.message,
+            isOpponent:false
+        })
+        this.setState({
+            message:'',
+            messageArray:messageArray
+        })
+    }
+
     render(){
         const player=this.state.isBlack?'Black':'White'
         const status=this.state.waiting?'Waiting...':'Your Move!'
         return (
-          <div className="boardWrapper">
-                <div className="label">
-                    {this.state.connected?
-                        <div>
-                            <div>{this.state.username+' VS '+this.state.opponentName}</div>
-                            <div>{'You have joined in Room: '+this.state.roomno}</div>
-                        </div>
-                        :null
-                    }
-                    <div>{'Playing: '+player+' | Status: '+status}</div>
-                    {this.state.winner!==null && this.state.started?<div onClick={this.initialise} style={{cursor:'pointer',display:'inline'}}>Reset</div>:null}
-                </div>
-
-                <canvas className="gameboard"
-                    ref={(ref)=>(this.canvas=ref)}
-                    width={cellWidth*(this.state.boardSize+1)}
-                    height={cellWidth*(this.state.boardSize+1)}
-                    onClick={this.canvasOnclick}
-                />
-                
-                <Dialog
-                open={this.state.userJoined&&!this.state.started}
-                aria-labelledby="alert-dialog-title"
-                aria-describedby="alert-dialog-description">
-                <DialogTitle id="alert-dialog-title">{this.state.opponentName+" is Challenging You!!!!"}</DialogTitle>
-                <DialogContent>
-                  <DialogContentText id="alert-dialog-description">
-                      {'Please Choose Black or White stone to start (Black first), first come first served >.<'}
-                  </DialogContentText>
-                </DialogContent>
-                <DialogActions>
-                  <Button onClick={()=>this.setColor(false)}  color="primary">
-                    White
-                  </Button>
-                  <Button onClick={()=>this.setColor(true)} color="primary" autoFocus>
-                    Black
-                  </Button>
-                </DialogActions>
-              </Dialog>
-                
-
-
+          <div className="mainWrapper">
+              <div style={{width:cellWidth*(this.state.boardSize+1),alignSelf:'middle'}}>
+                    <div className="label">
+                        {this.state.connected?
+                                <div>{this.state.username+' VS '+this.state.opponentName}</div>:null
+                        }
+                        <div>{'Playing: '+player+' | Status: '+status}</div>
+                        {this.state.winner!==null && this.state.started?<div onClick={this.initialise} style={{cursor:'pointer',display:'inline'}}>Reset</div>:null}
+                    </div>
+                    <canvas className="gameboard"
+                        ref={(ref)=>(this.canvas=ref)}
+                        width={cellWidth*(this.state.boardSize+1)}
+                        height={cellWidth*(this.state.boardSize+1)}
+                        onClick={this.canvasOnclick}
+                    />
+                    <Dialog open={this.state.userJoined&&!this.state.started}>
+                        <DialogTitle>{this.state.opponentName+" is Challenging You!!!!"}</DialogTitle>
+                        <DialogContent>
+                            <DialogContentText>
+                                {'Please Choose Black or White stone to start (Black first), first come first served >.<'}
+                            </DialogContentText>
+                            </DialogContent>
+                        <DialogActions>
+                            <Button onClick={()=>this.setColor(false)}  color="primary">White</Button>
+                            <Button onClick={()=>this.setColor(true)} color="primary" autoFocus>Black</Button>
+                        </DialogActions>
+                    </Dialog>
+              </div>
+              {isMobile?null:
+              <div className="chatboxWrapper">
+                  <div className="chatboxLabel">
+                      <span className='dot' style={this.state.userJoined?{backgroundColor:'green'}:null}/>
+                      {'Room: '+this.state.roomno}
+                  </div>
+                  <div className="messageContainer" style={{height:cellWidth*(this.state.boardSize+1)-20}}>
+                      {this.state.messageArray.map((message)=>(
+                            <div className={message.isOpponent?'box s2':'box s1'} 
+                                style={message.isOpponent?{background:'rgb(248, 161, 176)',alignSelf:'flex-start',marginLeft:10}:null}>
+                                {message.message}
+                            </div>
+                        ))}
+                  </div>
+                  <form onSubmit={this.sendMessage}>
+                      <input className="chatInput"
+                        value={this.state.message}
+                        required={true}
+                        onChange={(e)=>{this.setState({message:e.target.value})}}
+                        type="text"
+                        placeholder="Say something to your opponent!" 
+                        autoFocus/>
+                      <input type='submit' style={{visibility:'hidden'}}/>
+                  </form>
+              </div>}
           </div>
         );
       }

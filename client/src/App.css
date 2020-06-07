@@ -2,9 +2,15 @@
     text-align: center;
 }
 
-.boardWrapper{
+.mainWrapper{
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+  display: flex;
   height: 100vh;
   overflow-y: hidden;
+  flex-direction: row;
+  background-color: #f7f7f7;
 }
 
 .label{
@@ -14,4 +20,90 @@
 .gameboard{
   background-color:rgb(233, 198, 156);
   box-shadow:-2px -2px 2px #f3f3f3, 4px 4px 4px #cacaca;
+}
+
+.chatboxWrapper{
+  margin-top: calc((100vh - 650px)/8);
+  height:fit-content;
+  background-color: #fff;
+  margin-left: 10vw;
+  width:320px;
+  box-shadow:-2px -2px 2px #f3f3f3, 4px 4px 4px #cacaca;
+}
+
+.chatboxLabel{
+  background: #293239;
+  border-radius: 5px 5px 0 0;
+  color: #fff;
+  padding: 16px 24px;
+}
+
+.dot {
+  margin-right: 6px;
+  height: 12px;
+  width: 12px;
+  background-color: rgba(236, 19, 19, 0.616);
+  border-radius: 50%;
+  display: inline-block;
+}
+
+fieldset{
+  border: 0;
+  margin: 0 0 20px 0;
+  padding: 0;
+}
+
+.chatInput{
+  width: 80%;
+  border: 1px solid #ccc;
+  border-radius: 3px;
+  padding: 8px;
+  outline: none;
+}
+
+.messageContainer{
+  display: flex;
+  flex-direction: column;
+  overflow-y: scroll;
+}
+
+.box {
+  word-wrap: break-word;
+  align-self: flex-end;
+  margin: 10px 10px 10px 0;
+  float: right;
+  max-width: 60%;
+  background: #00bfb6;
+  padding: 10px;
+  text-align: center;
+  font-weight: 900;
+  color: #fff;
+  font-family: arial;
+  position: relative;
+}
+
+.s1:before {
+  content: "";
+  width: 0px;
+  height: 0px;
+  position: absolute;
+  border-left: 10px solid #00bfb6;
+  border-right: 10px solid transparent;
+  border-top: 10px solid #00bfb6;
+  border-bottom: 10px solid transparent;
+  right: -10px;
+  top: 6px;
+}
+
+.s2:before {
+  content: "";
+  width: 0px;
+  height: 0px;
+  position: absolute;
+  border-left: 10px solid transparent;
+  border-right: 10px solid rgb(248, 161, 176);
+  border-top: 10px solid rgb(248, 161, 176);
+  border-bottom: 10px solid transparent;
+  left: -10px;
+  top: 6px;
 }
