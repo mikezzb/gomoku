@@ -30,15 +30,17 @@ export default class Board extends Component{
             winner:null,
             boardSize:isMobile?11:15,
             moveNumber:0,
-            waiting:false,
+            waiting:false,//disable action if user is waiting for opponent move
             roomno:null,//connected room number
-            fixedColor:false,
             userJoined:false,
             started:false,
+            latestMove:'',
+            snackbarMessage:null,
             connected:false //connected if online pvp, else play with computer or local pvp
         }
         this.messagesEnd=React.createRef();
         this.scrollToBottom=this.scrollToBottom.bind(this)
+        this.toast=this.toast.bind(this)
     }
 
     componentDidMount(){
@@ -49,8 +51,12 @@ export default class Board extends Component{
                 this.setState({waiting:false})
                 this.judger(move.x,move.y,move.isBlack)
             })
-            socket.on("emitUsername",(username)=>{
-                this.setState({opponentName:username})
+            socket.on("emitUsername",(data)=>{
+                this.setState({opponentName:data.username})
+                if(data.size!==this.state.boardSize && data.size===11)
+                    this.setBoardSize(11)
+                else
+                    this.initialize()
             })
             socket.on('connectToRoom',(data)=>{
                 console.log('connected to room no. '+data.roomno+'number of clients '+data.clientCount+' Joined? '+this.state.userJoined)
@@ -58,7 +64,8 @@ export default class Board extends Component{
                     console.log('Emitting username out!!!')
                     socket.emit('emitUsername',{
                         roomno:data.roomno,
-                        username:this.state.username
+                        username:this.state.username,
+                        size:this.state.boardSize
                     })
                     this.setState({userJoined:true})
                 }
@@ -69,15 +76,20 @@ export default class Board extends Component{
                         roomno:data.roomno,
                         roomPlayerNumber:this.state.roomPlayerNumber+1
                     })
+                    this.toast('You have entered room '+data.roomno)
                 }
             });
             socket.on('roomChat',(message)=>{//sent chat message
-                let messageArray=this.state.messageArray
-                messageArray.push({
-                    message:message,
-                    isOpponent:true
-                })
-                this.setState({messageArray:messageArray})
+                if(isMobile){//since mobile have no space for chat room, can add a line of input at bottom [TO BE FIXED]
+                    this.toast(this.state.opponentName+' : '+message)
+                }else{
+                    let messageArray=this.state.messageArray
+                    messageArray.push({
+                        message:message,
+                        isOpponent:true
+                    })
+                    this.setState({messageArray:messageArray})
+                }
             })
             socket.on('setPlayingColor',(data)=>{//received opponent color setting
                 this.setState({
@@ -85,14 +97,25 @@ export default class Board extends Component{
                     started:true,
                     waiting:data.isBlack// black first, !data.isBlack is self color, so data.isBlack is true mean waiting is true
                 })
+                //may call initialize first but will set started to true
+                this.toast('Match Started!')
             })
             socket.on('quitRoom',()=>{
-                alert('Your opponent quited, you win! \n 不戰而屈人之兵，善之善者也！')
+                this.toast('Your opponent quited, you win! \n 不戰而屈人之兵，善之善者也！')
                 this.setState({
                     userJoined:false,
+                    moveNumber:0,
                     started:false,
                     opponentName:''
                 })
+                setTimeout(()=>{
+                    this.initialize()
+                },1000)
+            })
+            socket.on('rematch',()=>{
+                this.toast('Rematch is requested!')
+                this.setState({started:false})
+                this.initialize()
             })
             if(this.state.roomno===null)// if first time joining the room
                 socket.emit('joinRoom',null)
@@ -102,35 +125,32 @@ export default class Board extends Component{
                 return undefined
             });
 
-        }else{
+        }else
             socket.disconnect()
-        }
-        this.initialise()
+
+        this.initialize()
     }
 
     componentDidUpdate() {
         if(this.state.connected && !isMobile){
             setTimeout(()=>{
                 this.scrollToBottom();
-            },300)//ref wont initialised without timeout (#BUG) (set mount true in componentdidmount also wont work, maybe due to webpack hot update bug)
+            },300)//ref wont initialized without timeout (#BUG) (set mount true in componentdidmount also wont work, maybe due to webpack hot update bug)
         }
     }
 
-    componentWillUnmount(){
-        window.removeEventListener('beforeunload', this.onUnmount, false);
-    }
+    componentWillUnmount(){window.removeEventListener('beforeunload', this.onUnmount, false);}
 
     canvasOnclick=(e)=>{
         if(!this.state.waiting){
             const x=Math.floor(e.nativeEvent.offsetX / cellWidth)
             const y=Math.floor(e.nativeEvent.offsetY / cellWidth)
             this.judger(x,y,null)
-        }else{
-            alert('Please Wait Your Opponent! Or please choose a color to start')
-        }
+        }else
+            this.toast(this.state.winner!==null?'Match Ended! Press Rematch to start a new one! ':'Please Wait Your Opponent!')
     }
 
-    initialise=()=>{
+    initialize=()=>{
         const ctx = this.canvas.getContext('2d');
         ctx.clearRect(0,0,this.canvas.width,this.canvas.height)
         ctx.strokeStyle='black'
@@ -147,10 +167,15 @@ export default class Board extends Component{
                 ctx.stroke();
                 col.push(null);
             }
-            row.push(col);//initialise null 2D [15][15] Array as the board
+            row.push(col);//initialize null 2D [15][15] Array as the board
         }
         ctx.closePath();
-        this.setState({board:row})
+        this.setState({
+            board:row,
+            winner:null,
+            latestMove:'',
+            moveNumber:0
+        })
     }
       
     judger=(x,y,opponentColor)=>{
@@ -158,10 +183,10 @@ export default class Board extends Component{
         const isBlack=opponentColor===null?this.state.isBlack:opponentColor
         const moveNumber=this.state.moveNumber
         if(board[y][x]===null){// if the position is empty then place the piece
-            //draw piece
-            if(this.state.connected && opponentColor===null){
+            this.setState({latestMove:((isBlack?'B ':'W ')+y+', '+x)})
+            if(this.state.connected && opponentColor===null)//if drawing own move then emit to opponent
                 socket.emit("move", {x:x,y:y,isBlack:isBlack,roomno:this.state.roomno});
-            }
+            //draw piece
             const ctx = this.canvas.getContext('2d');
             ctx.beginPath()
             ctx.fillStyle = isBlack?"black":"white";//piece color
@@ -171,27 +196,24 @@ export default class Board extends Component{
             0,2*Math.PI)
             ctx.fill();
             ctx.closePath()
-            //change board state
             board[y][x]=isBlack // rmb coordinate are reversed compared with the pixel position
             this.setState({
                 board:board,
                 moveNumber:moveNumber+1
             })
-            if(!this.state.connected){
+            if(!this.state.connected)
                 this.setState({isBlack:!this.state.isBlack})
-            }
 
-            if(opponentColor===null&&this.state.connected){
+            if(opponentColor===null&&this.state.connected)
                 this.setState({waiting:true})
-            }
 
             if(this.gameOver(x,y,isBlack)){//if game over
                 const winner=opponentColor===null?this.state.isBlack:opponentColor
                 const winnerText=winner?'Black':'White'
-                alert(' GG '+winnerText+' Win!')
-                this.setState({winner:this.state.isBlack})
+                this.toast(' GG '+winnerText+' Win!')
+                this.setState({winner:winnerText,waiting:true})
             }else if(moveNumber+1===(this.state.boardSize+1)*(this.state.boardSize+1)){
-                alert('Draw!')
+                this.toast('Draw!')
             }
         }
     }
@@ -202,7 +224,7 @@ export default class Board extends Component{
             let counter=0
             for(let j=0;j<5;j++){
                 if(i+j>this.state.boardSize)// can optimise
-                    break//or maybe continue
+                    break
                 if(this.state.board[i+j][x]===isBlack)
                     counter++
                 else
@@ -218,7 +240,7 @@ export default class Board extends Component{
             let counter=0
             for(let j=0;j<5;j++){
                 if(i+j>this.state.boardSize)
-                    break//or maybe continue
+                    break
                 if(this.state.board[y][i+j]===isBlack)
                     counter++
                 else
@@ -250,27 +272,23 @@ export default class Board extends Component{
             if(counterSlash===5||counterBackSlash===5)
                 return true;
         }
-
     }
 
     setBoardSize=(size)=>{
-        this.setState({
-            boardSize:size,
-            isBlack:true,
-            moveNumber:0
-        },()=>{
-            this.initialise()
-        })
+        this.setState({boardSize:size},()=>{this.initialize()})
+        if(!this.state.connected)
+            this.setState({isBlack:true})
     }
 
     setColor=(isBlack)=>{
         if(this.state.userJoined&&this.state.connected)
-            socket.emit('setPlayingColor',{roomno:this.state.roomno,isBlack:isBlack})
+            socket.emit('setPlayingColor',{roomno:this.state.roomno,isBlack:isBlack,size:this.state.boardSize})
         this.setState({
             isBlack:isBlack,
             waiting:!isBlack,
             started:true
         })
+        this.toast('Match Started!')
     }
 
     sendMessage=(e)=>{
@@ -294,18 +312,39 @@ export default class Board extends Component{
         this.messagesEnd.current.scrollIntoView();
     }
 
+    rematch=()=>{
+        if(this.state.connected)
+            socket.emit('rematch',this.state.roomno)
+        else{
+            this.initialize()
+            this.setState({waiting:false})
+        }
+    }
+
+    toast=(message)=>{
+        this.setState({snackbarMessage:message},()=>{
+            setTimeout(()=>{
+                this.setState({snackbarMessage:null})
+            },2900)
+        })
+    }
+
     render(){
-        const player=this.state.isBlack?'Black':'White'
-        const status=this.state.waiting?'Waiting...':'Your Move!'
         return (
           <div className="mainWrapper">
               <div style={{width:cellWidth*(this.state.boardSize+1),alignSelf:'middle'}}>
                     <div className="label">
                         {this.state.connected?
-                                <div>{this.state.username+' VS '+this.state.opponentName}</div>:null
-                        }
-                        <div>{'Playing: '+player+' | Status: '+status}</div>
-                        {this.state.winner!==null && this.state.started?<div onClick={this.initialise} style={{cursor:'pointer',display:'inline'}}>Reset</div>:null}
+                            <div className='labelBold'>
+                                {this.state.username+' VS '+this.state.opponentName}
+                                {this.state.winner==null?null:('| Winner: '+this.state.winner)}
+                            </div>:null}  
+                        {(this.state.winner!==null && this.state.started)||!this.state.connected?<div onClick={this.rematch} className="labelBold" style={{cursor:'pointer',display:'inline-block'}}>Rematch!</div>:null}
+                        <div>
+                            {'Playing: '}
+                            {<span className="dot" style={this.state.isBlack?{backgroundColor:'black',height:13,width:13}:{backgroundColor:'white',border:'rgba(0, 0, 0, 0.4) 1px solid'}}/>}
+                            {' | Status: '+(this.state.waiting?'Waiting... ':'Your Move! ')+'| Latest Move: '+this.state.latestMove}
+                        </div>
                     </div>
                     <canvas className="gameboard"
                         ref={(ref)=>(this.canvas=ref)}
@@ -332,7 +371,7 @@ export default class Board extends Component{
                       <span className='dot' style={this.state.userJoined?{backgroundColor:'green'}:null}/>
                       {'Room: '+this.state.roomno}
                   </div>
-                  <div className="messageContainer" style={{height:cellWidth*(this.state.boardSize+1)-60}}>
+                  <div className="messageContainer" style={{height:cellWidth*(this.state.boardSize+1)-58}}>
                         {this.state.messageArray.map((message)=>(
                             <div className={message.isOpponent?'box s2':'box s1'} 
                                 style={message.isOpponent?{background:'rgb(248, 161, 176)',alignSelf:'flex-start',marginLeft:8}:null}>
@@ -354,6 +393,7 @@ export default class Board extends Component{
                       <input type='submit' style={{visibility:'hidden'}}/>
                   </form>
               </div>}
+              <div className={this.state.snackbarMessage===null?'snackbar':'snackbar show'}>{this.state.snackbarMessage}</div>
           </div>
         );
       }

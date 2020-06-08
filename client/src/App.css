@@ -9,24 +9,48 @@
   display: flex;
   height: 100vh;
   flex-direction: row;
-  background-color: #f7f7f7;
+  background-color: #f5f4f4;
 }
 
 .label >div{
   margin-bottom: 8px;
 }
 
+.labelBold{
+  font-size:1.8em;
+  font-weight:450;
+}
+
+/*
+.VSWrapper{
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+}
+
+.VSCard{
+  font-size: 24px;
+  align-self: center;
+  padding: 12px;
+  font-style: italic;
+  color: white;
+  background-color: black;
+  flex: 1;
+}
+*/
 .gameboard{
   background-color:rgb(233, 198, 156);
-  box-shadow:-2px -2px 2px #f3f3f3, 4px 4px 4px #cacaca;
+  box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19);
 }
 
 .chatboxWrapper{
+  border-radius: 5px 5px 0 0;
   height:fit-content;
   background-color: #fff;
   margin-left: 10vw;
   width:320px;
-  box-shadow:-2px -2px 2px #f3f3f3, 4px 4px 4px #cacaca;
+  box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19);
 }
 
 .chatboxLabel{
@@ -40,15 +64,9 @@
   margin-right: 6px;
   height: 12px;
   width: 12px;
-  background-color: rgba(236, 19, 19, 0.616);
+  background-color: rgb(240, 98, 98);
   border-radius: 50%;
   display: inline-block;
-}
-
-fieldset{
-  border: 0;
-  margin: 0 0 20px 0;
-  padding: 0;
 }
 
 .chatInput{
@@ -62,6 +80,7 @@ fieldset{
 .messageContainer{
   -ms-overflow-style: none;
   display: flex;
+  padding-top: 10px;
   flex-direction: column;
   overflow-y: scroll;
 }
@@ -82,7 +101,7 @@ fieldset{
   text-align: center;
   font-weight: 900;
   color: #fff;
-  font-family: arial;
+  font-family: 'Helvetica Neue', sans-serif;
   position: relative;
 }
 
@@ -110,4 +129,46 @@ fieldset{
   border-bottom: 6px solid transparent;
   left: -6px;
   top: 3px;
+}
+
+.snackbar {
+  visibility: hidden;
+  min-width: 250px;
+  background-color: #293239ec;
+  color: #fff;
+  text-align: center;
+  border-radius: 2px;
+  padding: 16px;
+  position: fixed;
+  z-index: 1;
+  left: 50%;
+  transform: translate(-50%, 0);
+  top: 30px;
+  font-size: 17px;
+}
+
+.snackbar.show {
+  visibility: visible;
+  -webkit-animation: fadein 0.5s, fadeout 0.5s 2.5s;
+  animation: fadein 0.5s, fadeout 0.5s 2.5s;
+}
+
+@-webkit-keyframes fadein {
+  from {top: 0; opacity: 0;} 
+  to {top: 30px; opacity: 1;}
+}
+
+@keyframes fadein {
+  from {top: 0; opacity: 0;}
+  to {top: 30px; opacity: 1;}
+}
+
+@-webkit-keyframes fadeout {
+  from {top: 30px; opacity: 1;} 
+  to {top: 0; opacity: 0;}
+}
+
+@keyframes fadeout {
+  from {top: 30px; opacity: 1;}
+  to {top: 0; opacity: 0;}
 }

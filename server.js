@@ -36,7 +36,7 @@ io.on('connection', function(socket){
   });
 
   socket.on('emitUsername',(data)=>{// to be integrated in setplayingcolor
-    socket.to("room-"+data.roomno).emit('emitUsername',data.username);// tell opponent your name
+    socket.to("room-"+data.roomno).emit('emitUsername',data);// tell opponent your name
   })
 
   socket.on('move', function(move){//move is a JSON with x,y coord and isBlack boolean
@@ -52,6 +52,10 @@ io.on('connection', function(socket){
   socket.on('roomChat',(data)=>{
     //console.log('User '+data.username+'Playing: '+data.isBlack);
     socket.to("room-"+data.roomno).emit('roomChat',data.message);// emit move to the room
+  })
+
+  socket.on('rematch',(roomno)=>{
+    io.to("room-"+roomno).emit('rematch',null);// emit move to the room
   })
 
 });
