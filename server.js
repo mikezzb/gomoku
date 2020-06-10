@@ -22,13 +22,15 @@ io.on('connection', function(socket){
   })
 
   socket.on('joinRoom', function(specifiedRoomNo){
-    var room = io.nsps['/'].adapter.rooms["room-"+roomno];
+    joiningRoom=specifiedRoomNo||roomno //if user specified a room number to join else assign a number
+    var room = io.nsps['/'].adapter.rooms["room-"+joiningRoom];
     let clientCount=0
     if(room)// if room exist
       clientCount=room.length
-    if(room && clientCount > 1) // if room is full
+    if(room && clientCount > 1 && joiningRoom===roomno){// if room is full
       roomno++;
-    joiningRoom=specifiedRoomNo||roomno //if user specified a room number to join else assign a number
+      joiningRoom++;
+    }
     socket.join("room-"+joiningRoom);
     //console.log('Joining room'+joiningRoom)
     //Send this event to everyone in the room to update room status and room number.

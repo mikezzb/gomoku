@@ -17,11 +17,14 @@ class App extends Component {
       gotCookie:false,
       showDialog:true,
       username:'',
+      roomno:null,
       onlineMode:false
     }
   }
 
-  setMode=(isOnline)=>{
+  setMode=(e,isOnline)=>{
+    if(isOnline)
+      e.preventDefault()
     this.setState({
       showDialog:false,
       onlineMode:isOnline
@@ -40,40 +43,31 @@ class App extends Component {
   render(){
     return (
       <div className="App">
-        {this.state.showDialog?null:
-        <Board onlineMode={this.state.onlineMode} username={this.state.username}/>
+        {this.state.showDialog?
+        <div className="homeScreen">
+          <div className="content">
+            <div className="container">
+              <div className="left">
+                <div className="headerText">Gomoku.io</div>
+                <div className="detailText">Please Choose the mode that you want to play</div>
+              </div>
+              <div className="right">
+                <form className="mainForm" onSubmit={(e)=>this.setMode(e,true)}>
+                  <label className="mainLabel">Username</label>
+                  <input className="mainInput" value={this.state.username} type="text" onChange={(e)=>{this.setState({username:e.target.value})}} autoFocus/>
+                  <label className="mainLabel">Room Number (optional)</label>
+                  <input className="mainInput" type="number" onChange={(e)=>{this.setState({roomno:e.target.value})}}/>
+                  <div className="ButtonWrapper">
+                    <div className="submitButton" onClick={()=>this.setMode(null,false)} style={{display:'inline-block',marginLeft:0}}>Play Local</div>
+                    <input className="submitButton" type="submit" value="Find a Match!"/>
+                  </div>
+                </form>
+              </div>
+            </div>
+          </div>
+        </div>
+        :<Board onlineMode={this.state.onlineMode} username={this.state.username} roomno={this.state.roomno}/>
         }
-        <Dialog open={this.state.showDialog} aria-labelledby="form-dialog-title">
-          {this.state.gotCookie?
-            <DialogTitle id="form-dialog-title">{'Welcome back '+this.state.username+'!'}</DialogTitle>:
-            <DialogTitle id="form-dialog-title">Welcome to Gomoku.io !</DialogTitle>
-          }
-          <DialogContent>
-              <DialogContentText>
-              {this.state.gotCookie?
-                  ('Please select which mode you want to play.'):
-                  ('Enter a username to find a match online. Or if you want to play locally, please hit play local')}
-              </DialogContentText>
-              {this.state.gotCookie?null:
-              <TextField
-                  autoFocus
-                  onChange={(e)=>{this.setState({username:e.target.value})}}
-                  margin="dense"
-                  id="name"
-                  label="Username"
-                  type="username"
-                  fullWidth
-              />}
-            </DialogContent>
-          <DialogActions>
-              <Button onClick={()=>this.setMode(false)} color="primary">
-                  Play Local
-              </Button>
-              <Button onClick={()=>this.setMode(true)}  color="primary">
-                  Find a match!
-              </Button>
-          </DialogActions>
-        </Dialog>
       </div>
     );
   }

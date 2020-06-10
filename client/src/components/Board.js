@@ -81,7 +81,7 @@ export default class Board extends Component{
             });
             socket.on('roomChat',(message)=>{//sent chat message
                 if(isMobile){//since mobile have no space for chat room, can add a line of input at bottom [TO BE FIXED]
-                    this.toast(this.state.opponentName+' : '+message)
+                    this.toast(this.state.opponentName+': '+message)
                 }else{
                     let messageArray=this.state.messageArray
                     messageArray.push({
@@ -101,7 +101,7 @@ export default class Board extends Component{
                 this.toast('Match Started!')
             })
             socket.on('quitRoom',()=>{
-                this.toast('Your opponent quited, you win! \n 不戰而屈人之兵，善之善者也！')
+                this.toast('Your opponent quited, you win! 不戰而屈人之兵，善之善者也！')
                 this.setState({
                     userJoined:false,
                     moveNumber:0,
@@ -118,7 +118,7 @@ export default class Board extends Component{
                 this.initialize()
             })
             if(this.state.roomno===null)// if first time joining the room
-                socket.emit('joinRoom',null)
+                socket.emit('joinRoom',this.props.roomno)
 
             window.addEventListener('beforeunload', (event) => {
                 socket.emit('quitRoom',this.state.roomno)
@@ -330,6 +330,17 @@ export default class Board extends Component{
     }
 
     render(){
+        const messageForm=[
+            <form onSubmit={this.sendMessage} className='messageForm'>
+                <input className="chatInput"
+                  value={this.state.message}
+                  required={true}
+                  onChange={(e)=>{this.setState({message:e.target.value})}}
+                  type="text"
+                  placeholder="Say something to your opponent!" 
+                  autoFocus/>
+                <input type='submit' style={{visibility:'hidden'}}/>
+            </form>]
         return (
           <div className="mainWrapper">
               <div style={{width:cellWidth*(this.state.boardSize+1),alignSelf:'middle'}}>
@@ -382,17 +393,13 @@ export default class Board extends Component{
                             ref={this.messagesEnd}>
                         </div>
                   </div>
-                  <form onSubmit={this.sendMessage}>
-                      <input className="chatInput"
-                        value={this.state.message}
-                        required={true}
-                        onChange={(e)=>{this.setState({message:e.target.value})}}
-                        type="text"
-                        placeholder="Say something to your opponent!" 
-                        autoFocus/>
-                      <input type='submit' style={{visibility:'hidden'}}/>
-                  </form>
+                  {messageForm}
               </div>}
+              {isMobile&&this.state.connected?
+              <div style={{width:'100vw',position:'fixed',bottom:20}}>
+                  {messageForm}
+              </div>
+              :null}
               <div className={this.state.snackbarMessage===null?'snackbar':'snackbar show'}>{this.state.snackbarMessage}</div>
           </div>
         );
