@@ -48,7 +48,7 @@ io.on('connection', function(socket){
 
   socket.on('setPlayingColor',(data)=>{
     //console.log('User '+data.username+'Playing: '+data.isBlack);
-    socket.to("room-"+data.roomno).emit('setPlayingColor',data);// emit move to the room
+    io.to("room-"+data.roomno).emit('setPlayingColor',data);// emit move to the room
   })
 
   socket.on('roomChat',(data)=>{

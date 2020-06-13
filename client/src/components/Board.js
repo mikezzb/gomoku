@@ -12,7 +12,7 @@ let cellWidth=isMobile?28:40
 var socket = io();
 /*
 var socket = io();
-var socket = io('localhost:5000');
+var socket = io('192.168.1.114:5000');
 */
 
 export default class Board extends Component{
@@ -91,15 +91,25 @@ export default class Board extends Component{
                     this.setState({messageArray:messageArray})
                 }
             })
-            socket.on('setPlayingColor',(data)=>{//received opponent color setting
-                this.setState({
-                    isBlack:!data.isBlack,
-                    started:true,
-                    waiting:data.isBlack// black first, !data.isBlack is self color, so data.isBlack is true mean waiting is true
+            if(!this.state.started){
+                socket.on('setPlayingColor',(data)=>{//received opponent color setting
+                    if(data.id===socket.id){
+                        this.setState({
+                            isBlack:data.isBlack,
+                            waiting:!data.isBlack,
+                            started:true
+                        })
+                    }else{
+                        this.setState({
+                            isBlack:!data.isBlack,
+                            started:true,
+                            waiting:data.isBlack// black first, !data.isBlack is self color, so data.isBlack is true mean waiting is true
+                        })
+                    }
+                    //may call initialize first but will set started to true
+                    this.toast('Match Started!')
                 })
-                //may call initialize first but will set started to true
-                this.toast('Match Started!')
-            })
+            }
             socket.on('quitRoom',()=>{
                 this.toast('Your opponent quited, you win! 不戰而屈人之兵，善之善者也！')
                 this.setState({
@@ -281,14 +291,8 @@ export default class Board extends Component{
     }
 
     setColor=(isBlack)=>{
-        if(this.state.userJoined&&this.state.connected)
-            socket.emit('setPlayingColor',{roomno:this.state.roomno,isBlack:isBlack,size:this.state.boardSize})
-        this.setState({
-            isBlack:isBlack,
-            waiting:!isBlack,
-            started:true
-        })
-        this.toast('Match Started!')
+        console.log('id: '+socket.id)
+        socket.emit('setPlayingColor',{roomno:this.state.roomno,isBlack:isBlack,size:this.state.boardSize,id:socket.id})
     }
 
     sendMessage=(e)=>{
