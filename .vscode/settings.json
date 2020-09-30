@@ -1,0 +1,8 @@
+{
+    "esline.enable": true,
+    "eslint.nodePath": "./client/node_modules",
+    "eslint.workingDirectories": [
+        "./client", 
+        "./",
+    ],
+}

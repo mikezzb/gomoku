@@ -1,0 +1,20 @@
+{
+  "name": "gomoku",
+  "version": "0.0.0",
+  "private": true,
+  "scripts": {
+    "start": "node server.js",
+    "heroku-postbuild": "cd client && yarn install && yarn run build"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "express": "^4.16.4",
+    "heroku-ssl-redirect": "^0.0.4",
+    "socket.io": "^2.3.0"
+  },
+  "engines": {
+    "node": "v14.10.1",
+    "npm": "6.14.8",
+    "yarn": "1.22.4"
+  }
+}
