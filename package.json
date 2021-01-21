@@ -10,7 +10,7 @@
     "cors": "^2.8.5",
     "express": "^4.16.4",
     "heroku-ssl-redirect": "^0.0.4",
-    "socket.io": "^2.3.0"
+    "socket.io": "^2.4.0"
   },
   "engines": {
     "node": "v14.10.1",
