@@ -1,0 +1,21 @@
+{
+  "compilerOptions": {
+      "target": "ES6",
+      "module": "CommonJS",
+      "esModuleInterop": true,
+      "moduleResolution": "node",
+      "lib": ["ES2019"],
+      "sourceMap": true,
+      "outDir": "build",
+      "baseUrl": ".",
+      "skipDefaultLibCheck": true,
+      "noEmitOnError": true,
+      "strict": false,
+      "paths": {
+          "*": [
+              "node_modules/*"
+          ]
+      }
+  }
+}
+
