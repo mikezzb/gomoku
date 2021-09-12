@@ -1,8 +1,7 @@
  
 {
   "env": {
-      "browser": true,
-      "es2021": true
+      "browser": true
   },
   "extends": [
     "plugin:react/recommended",
@@ -62,6 +61,7 @@
     "no-restricted-syntax": 0,
     "no-undef": 0,
     "no-unused-vars": 0,
+    "react-hooks/exhaustive-deps": 0,
 		"@typescript-eslint/no-unused-vars": "off",
     "@typescript-eslint/explicit-function-return-type": "off",
     "prettier/prettier": [

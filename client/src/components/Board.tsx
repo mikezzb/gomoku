@@ -1,6 +1,4 @@
-import React, {
-  useState, useEffect, useRef, useReducer
-} from 'react';
+import React, { useState, useEffect, useRef, useReducer } from 'react';
 import { isMobile } from 'react-device-detect';
 import io from 'socket.io-client';
 import Button from '@material-ui/core/Button';
@@ -47,8 +45,8 @@ const Board = props => {
 
   // change userJoined, winner, waiting, connected to reducer
 
-  const messagesEnd = useRef();
-  const canvas = useRef();
+  const messagesEnd = useRef(null);
+  const canvas = useRef(null);
 
   const initialize = () => {
     const ctx = canvas.current.getContext('2d');
@@ -60,10 +58,16 @@ const Board = props => {
       const col = [];
       for (let j = 0; j <= boardSize; j++) {
         ctx.moveTo(cellWidth / 2 + i * cellWidth, cellWidth / 2);
-        ctx.lineTo(cellWidth / 2 + i * cellWidth, cellWidth * boardSize + cellWidth / 2);
+        ctx.lineTo(
+          cellWidth / 2 + i * cellWidth,
+          cellWidth * boardSize + cellWidth / 2
+        );
         ctx.stroke();
         ctx.moveTo(cellWidth / 2, cellWidth / 2 + i * cellWidth);
-        ctx.lineTo(cellWidth * boardSize + cellWidth / 2, cellWidth / 2 + i * cellWidth);
+        ctx.lineTo(
+          cellWidth * boardSize + cellWidth / 2,
+          cellWidth / 2 + i * cellWidth
+        );
         ctx.stroke();
         col.push(null);
       }
@@ -75,7 +79,7 @@ const Board = props => {
     setStatus({ winner: null });
   };
 
-  useEffect(() => {
+  const socketInit = async () => {
     if (props.onlineMode) {
       socket.open();
       socket.on('move', move => {
@@ -86,25 +90,29 @@ const Board = props => {
         setStatus({ opponentName: data.username });
         if (data.size !== boardSize && data.size === 11) {
           setBoardSize(11);
-        }
-        else {
+        } else {
           initialize();
         }
       });
-      socket.on('roomChat', data => { // sent chat message
+      socket.on('roomChat', data => {
+        // sent chat message
         if (isMobile) {
           setSnackbarMessage(`${status.opponentName}: ${data.message}`);
-        }
-        else {
-          setMessageArray(old => [...old.concat([{
-            message: data.message,
-            isOpponent: true,
-            sendTime: data.sendTime,
-          }])]);
+        } else {
+          setMessageArray(old => [
+            ...old.concat([
+              {
+                message: data.message,
+                isOpponent: true,
+                sendTime: data.sendTime,
+              },
+            ]),
+          ]);
         }
       });
       if (!status.started) {
-        socket.on('setPlayingColor', data => { // receive opponent color setting
+        socket.on('setPlayingColor', data => {
+          // receive opponent color setting
           setIsBlack(data.id === socket.id ? data.isBlack : !data.isBlack);
           setStatus({
             waiting: data.id === socket.id ? !data.isBlack : data.isBlack,
@@ -114,7 +122,9 @@ const Board = props => {
         });
       }
       socket.on('quitRoom', () => {
-        setSnackbarMessage('Your opponent quited, you win! 不戰而屈人之兵，善之善者也。');
+        setSnackbarMessage(
+          'Your opponent quited, you win! 不戰而屈人之兵，善之善者也。'
+        );
         setMoveNumber(0);
         setStatus({
           userJoined: false,
@@ -134,9 +144,15 @@ const Board = props => {
         socket.emit('joinRoom', props.initialRoomno);
       }
     }
+  };
+
+  useEffect(() => {
+    socketInit();
     initialize();
-    return (() => socket.disconnect());
-  }, [props.onlineMode]);
+    return () => {
+      socket.disconnect();
+    };
+  }, [props?.onlineMode]);
 
   const onUnload = () => {
     socket.emit('quitRoom', roomno);
@@ -169,11 +185,12 @@ const Board = props => {
 
   useEffect(() => {
     window.addEventListener('beforeunload', onUnload);
-    return (() => window.removeEventListener('beforeunload', onUnload));
+    return () => window.removeEventListener('beforeunload', onUnload);
   }, [roomno]);
 
-  const gameOver = move => { // can optimise
-    const startingIndexVerticle = (move.y - 4) >= 0 ? (move.y - 4) : 0;
+  const gameOver = move => {
+    // can optimise
+    const startingIndexVerticle = move.y - 4 >= 0 ? move.y - 4 : 0;
     for (let i = startingIndexVerticle; i <= move.y; i++) {
       let counter = 0;
       for (let j = 0; j < 5; j++) {
@@ -184,7 +201,7 @@ const Board = props => {
       if (counter === 5) return true;
     }
     // check Horizontal
-    const startingIndexHorizontal = (move.x - 4) >= 0 ? (move.x - 4) : 0;
+    const startingIndexHorizontal = move.x - 4 >= 0 ? move.x - 4 : 0;
     for (let i = startingIndexHorizontal; i <= move.x; i++) {
       let counter = 0;
       for (let j = 0; j < 5; j++) {
@@ -199,13 +216,27 @@ const Board = props => {
       let counterSlash = 0;
       let counterBackSlash = 0;
       for (let j = 0; j < 5; j++) {
-        if (move.y + i + j > boardSize || move.y + i + j < 0 || move.x + i + j > boardSize || move.x + i + j < 0) continue;
-        if (board[move.y + i + j][move.x + i + j] === move.isBlack) counterSlash++;
+        if (
+          move.y + i + j > boardSize ||
+          move.y + i + j < 0 ||
+          move.x + i + j > boardSize ||
+          move.x + i + j < 0
+        )
+          continue;
+        if (board[move.y + i + j][move.x + i + j] === move.isBlack)
+          counterSlash++;
         else break;
       }
       for (let j = 0; j < 5; j++) {
-        if (move.y - i - j > boardSize || move.y - i - j < 0 || move.x + i + j > boardSize || move.x + i + j < 0) continue;
-        if (board[move.y - i - j][move.x + i + j] === move.isBlack) counterBackSlash++;
+        if (
+          move.y - i - j > boardSize ||
+          move.y - i - j < 0 ||
+          move.x + i + j > boardSize ||
+          move.x + i + j < 0
+        )
+          continue;
+        if (board[move.y - i - j][move.x + i + j] === move.isBlack)
+          counterBackSlash++;
         else break;
       }
       if (counterSlash === 5 || counterBackSlash === 5) return true;
@@ -216,20 +247,27 @@ const Board = props => {
   const judger = move => {
     const isBlackCopy = move.isBlack === null ? isBlack : move.isBlack;
     const moveNumberCopy = moveNumber;
-    if (board[move.y][move.x] === null) { // if the position is empty then place the piece
+    if (board[move.y][move.x] === null) {
+      // if the position is empty then place the piece
       if (status.connected && move.isBlack === null) {
         socket.emit('move', {
-          x: move.x, y: move.y, isBlack: isBlackCopy, roomno,
+          x: move.x,
+          y: move.y,
+          isBlack: isBlackCopy,
+          roomno,
         });
       }
       // draw piece
       const ctx = canvas.current.getContext('2d');
       ctx.beginPath();
-      ctx.fillStyle = isBlackCopy ? 'black' : 'white';// piece color
-      ctx.arc(Math.floor(move.x) * cellWidth + cellWidth / 2, // x coord
+      ctx.fillStyle = isBlackCopy ? 'black' : 'white'; // piece color
+      ctx.arc(
+        Math.floor(move.x) * cellWidth + cellWidth / 2, // x coord
         Math.floor(move.y) * cellWidth + cellWidth / 2, // y coord
         cellWidth / 2, // radius
-        0, 2 * Math.PI);
+        0,
+        2 * Math.PI
+      );
       ctx.fill();
       ctx.closePath();
       const boardCopy = board;
@@ -238,9 +276,11 @@ const Board = props => {
       setMoveNumber(moveNumberCopy + 1);
       if (!status.connected) setIsBlack(!isBlack);
 
-      if (move.isBlack === null && status.connected) setStatus({ waiting: true });
+      if (move.isBlack === null && status.connected)
+        setStatus({ waiting: true });
 
-      if (gameOver({ x: move.x, y: move.y, isBlack: isBlackCopy })) { // if game over
+      if (gameOver({ x: move.x, y: move.y, isBlack: isBlackCopy })) {
+        // if game over
         const winnerCopy = move.isBlack === null ? isBlack : move.isBlack;
         const winnerText = winnerCopy ? 'Black' : 'White';
         setSnackbarMessage(` GG ${winnerText} Win!`);
@@ -248,8 +288,7 @@ const Board = props => {
           winner: winnerText,
           waiting: true,
         });
-      }
-      else if (moveNumberCopy + 1 === (boardSize + 1) * (boardSize + 1)) {
+      } else if (moveNumberCopy + 1 === (boardSize + 1) * (boardSize + 1)) {
         setSnackbarMessage('Draw!');
       }
     }
@@ -260,9 +299,12 @@ const Board = props => {
       const x = Math.floor(e.nativeEvent.offsetX / cellWidth);
       const y = Math.floor(e.nativeEvent.offsetY / cellWidth);
       setCurrentMove({ x, y, isBlack: null });
-    }
-    else {
-      setSnackbarMessage(status.winner !== null ? 'Match Ended! Press Rematch to start a new one! ' : 'Please Wait Your Opponent!');
+    } else {
+      setSnackbarMessage(
+        status.winner !== null
+          ? 'Match Ended! Press Rematch to start a new one! '
+          : 'Please Wait Your Opponent!'
+      );
     }
   };
 
@@ -276,7 +318,10 @@ const Board = props => {
 
   const setColor = isBlackCopy => {
     socket.emit('setPlayingColor', {
-      roomno, isBlack: isBlackCopy, size: boardSize, id: socket.id,
+      roomno,
+      isBlack: isBlackCopy,
+      size: boardSize,
+      id: socket.id,
     });
   };
 
@@ -289,11 +334,13 @@ const Board = props => {
       sendTime,
     });
     setMessage('');
-    setMessageArray([...messageArray.concat({
-      message,
-      isOpponent: false,
-      sendTime,
-    })]);
+    setMessageArray([
+      ...messageArray.concat({
+        message,
+        isOpponent: false,
+        sendTime,
+      }),
+    ]);
   };
 
   useEffect(() => {
@@ -332,24 +379,45 @@ const Board = props => {
     <div className="mainWrapper">
       <div className="boardWrapper">
         <div className="label">
-          {
-            status.connected &&
+          {status.connected && (
             <div className="labelBold">
               {`${props.username} VS ${status.opponentName}`}
-              {status.winner && (`| Winner: ${status.winner}`)}
+              {status.winner && `| Winner: ${status.winner}`}
             </div>
-          }
-          {
-            ((status.winner !== null && status.started) || !status.connected) &&
-            <div onClick={rematch} className="labelBold rematch">Rematch!</div>
-          }
+          )}
+          {((status.winner !== null && status.started) ||
+            !status.connected) && (
+            <div onClick={rematch} className="labelBold rematch">
+              Rematch!
+            </div>
+          )}
           <div>
             {'Playing: '}
-            <span className="dot" style={isBlack ? { backgroundColor: 'black', height: 13, width: 13 } : { backgroundColor: 'white', border: 'rgba(0, 0, 0, 0.4) 1px solid' }} />
-            {` | Status: ${status.waiting ? 'Waiting... ' : 'Your Move! '}| Latest Move: ${
-              currentMove !== null ?
-                `${(currentMove.isBlack === null ? isBlack : currentMove.isBlack) ? 'B ' : 'W '} ${currentMove.y}, ${currentMove.x}` :
-                ''
+            <span
+              className="dot"
+              style={
+                isBlack
+                  ? { backgroundColor: 'black', height: 13, width: 13 }
+                  : {
+                      backgroundColor: 'white',
+                      border: 'rgba(0, 0, 0, 0.4) 1px solid',
+                    }
+              }
+            />
+            {` | Status: ${
+              status.waiting ? 'Waiting... ' : 'Your Move! '
+            }| Latest Move: ${
+              currentMove !== null
+                ? `${
+                    (
+                      currentMove.isBlack === null
+                        ? isBlack
+                        : currentMove.isBlack
+                    )
+                      ? 'B '
+                      : 'W '
+                  } ${currentMove.y}, ${currentMove.x}`
+                : ''
             }`}
           </div>
         </div>
@@ -364,28 +432,47 @@ const Board = props => {
           <DialogTitle>{`${status.opponentName} is Challenging You!!!!`}</DialogTitle>
           <DialogContent>
             <DialogContentText>
-              {'Please Choose Black or White stone to start (Black first), first come first served >.<'}
+              {
+                'Please Choose Black or White stone to start (Black first), first come first served >.<'
+              }
             </DialogContentText>
           </DialogContent>
           <DialogActions>
-            <Button onClick={() => setColor(false)} color="primary">White</Button>
-            <Button onClick={() => setColor(true)} color="primary" autoFocus>Black</Button>
+            <Button onClick={() => setColor(false)} color="primary">
+              White
+            </Button>
+            <Button onClick={() => setColor(true)} color="primary" autoFocus>
+              Black
+            </Button>
           </DialogActions>
         </Dialog>
       </div>
-      {
-        !isMobile && status.connected &&
+      {!isMobile && status.connected && (
         <div className="chatboxWrapper">
           <div className="chatboxLabel">
-            <span className="dot" style={status.userJoined ? { backgroundColor: 'green' } : null} />
+            <span
+              className="dot"
+              style={status.userJoined ? { backgroundColor: 'green' } : null}
+            />
             {`Room: ${roomno}`}
           </div>
-          <div className="messageContainer" style={{ height: cellWidth * (boardSize + 1) - 58 }}>
+          <div
+            className="messageContainer"
+            style={{ height: cellWidth * (boardSize + 1) - 58 }}
+          >
             {messageArray.map(msg => (
               <div
                 key={msg.sendTime}
                 className={msg.isOpponent ? 'box s2' : 'box s1'}
-                style={msg.isOpponent ? { background: 'rgb(248, 161, 176)', alignSelf: 'flex-start', marginLeft: 8 } : null}
+                style={
+                  msg.isOpponent
+                    ? {
+                        background: 'rgb(248, 161, 176)',
+                        alignSelf: 'flex-start',
+                        marginLeft: 8,
+                      }
+                    : null
+                }
               >
                 {msg.message}
               </div>
@@ -397,14 +484,13 @@ const Board = props => {
           </div>
           {messageForm}
         </div>
-      }
-      {
-        isMobile && status.connected &&
-        <div className="mobileMessageForm">
-          {messageForm}
-        </div>
-      }
-      <div className={snackbarMessage ? 'snackbar show' : 'snackbar'}>{snackbarMessage}</div>
+      )}
+      {isMobile && status.connected && (
+        <div className="mobileMessageForm">{messageForm}</div>
+      )}
+      <div className={snackbarMessage ? 'snackbar show' : 'snackbar'}>
+        {snackbarMessage}
+      </div>
     </div>
   );
 };
